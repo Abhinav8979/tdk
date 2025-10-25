@@ -1,0 +1,492 @@
+generator client {
+  provider      = "prisma-client-js"
+  output        = "../src/generated/prisma"
+  binaryTargets = ["native", "windows"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Store {
+  id                 String           @id @default(uuid())
+  name               String           @unique
+  lateEntryThreshold Int?             @default(10)
+  earlyExitThreshold Int?             @default(10)
+  createdAt          DateTime         @default(now())
+  updatedAt          DateTime         @updatedAt
+  expectedInTime     DateTime?        @default(dbgenerated("'1970-01-01 10:00:00'::timestamp without time zone"))
+  expectedOutTime    DateTime?        @default(dbgenerated("'1970-01-01 19:00:00'::timestamp without time zone"))
+  calendar           Calendar?        @relation("StoreCalendar")
+  ChannelPartner     ChannelPartner[] @relation("StoreChannelPartners")
+  Lead               Lead[]           @relation("StoreLeads")
+  pushMessages       PushMessage[]    @relation("StorePushMessages")
+  employees          User[]           @relation("StoreEmployees")
+  hrs                User[]           @relation("StoreHRs")
+}
+
+model Calendar {
+  id         String    @id @default(uuid())
+  storeId    String    @unique
+  weekdayOff String    @default("Sunday")
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  store      Store     @relation("StoreCalendar", fields: [storeId], references: [id])
+  holidays   Holiday[]
+}
+
+model Holiday {
+  holidayId   String   @id @default(uuid())
+  date        DateTime @db.Date
+  name        String
+  description String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  calendarId  String
+  calendar    Calendar @relation(fields: [calendarId], references: [id])
+
+  @@index([calendarId, date])
+}
+
+model User {
+  id                       String            @id @unique
+  email                    String            @unique
+  username                 String
+  password                 String
+  role                     Role              @default(BASIC)
+  userType                 String
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime
+  address                  String?
+  altContact               String?
+  city                     String?
+  contact                  String?           @unique
+  govtID                   String            @unique
+  referenceEmployee        String?
+  reportingManager         String?
+  empNo                    String?           @unique
+  restricted               Boolean           @default(false)
+  store                    String?
+  aadhar_number            String?
+  pan_number               String?
+  police_verification      String?
+  additionalDocuments      String[]
+  dob                      DateTime?         @db.Date
+  isHrPortalFirstLogin     Boolean           @default(true)
+  storeId                  String?
+  profilePicture           String?
+  fatherPhone              String?
+  motherName               String?
+  motherPhone              String?
+  aadhar_file              String?
+  pan_file                 String?
+  police_verification_file String?
+  leaveDays                Float?            @default(20.0)
+  expectedInTime           DateTime?         @default(dbgenerated("'1970-01-01 10:00:00'::timestamp without time zone"))
+  expectedOutTime          DateTime?         @default(dbgenerated("'1970-01-01 19:00:00'::timestamp without time zone"))
+  compOff                  Float?            @default(0.0)
+  dept                     dept?
+  profile                  profile?
+  fatherName               String?
+  basicSalary              Float?
+  Attendance               Attendance[]      @relation("EmployeeAttendance")
+  ChannelPartner           ChannelPartner[]
+  CompOffHistory           CompOffHistory[]
+  Expenses                 Expense[]         @relation("EmployeeExpenses")
+  Lead                     Lead[]
+  ApprovedLeaves           Leave[]           @relation("ApprovedBy")
+  Leaves                   Leave[]           @relation("EmployeeLeaves")
+  LeaveHistory             LeaveHistory[]
+  Notification             Notification[]    @relation("UserNotifications")
+  ApprovedOvertime         OvertimeRequest[] @relation("ApprovedBy")
+  OvertimeRequests         OvertimeRequest[] @relation("EmployeeOvertimeRequests")
+  CreatedPushMessages      PushMessage[]     @relation("CreatedBy")
+  PushMessage              PushMessage[]     @relation("UserPushMessages")
+  Salaries                 Salary[]          @relation("EmployeeSalaries")
+  store_info               Store?            @relation("StoreEmployees", fields: [storeId], references: [id])
+  hrStores                 Store[]           @relation("StoreHRs")
+}
+
+model Attendance {
+  attendanceId String    @id @default(uuid())
+  employeeId   String
+  date         DateTime  @db.Date
+  status       String?   @default("absent")
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime?
+  inTime       DateTime?
+  isEarlyExit  Boolean   @default(false)
+  isLateEntry  Boolean   @default(false)
+  outTime      DateTime?
+  Employee     User      @relation("EmployeeAttendance", fields: [employeeId], references: [id])
+
+  @@unique([employeeId, date])
+  @@index([employeeId, date])
+}
+
+model Leave {
+  leaveId               String         @id @default(uuid())
+  employeeId            String
+  startDate             DateTime
+  endDate               DateTime
+  isHalfDayStart        Boolean        @default(false)
+  isHalfDayEnd          Boolean        @default(false)
+  startHalfPeriod       String?
+  endHalfPeriod         String?
+  reason                String
+  status                String         @default("pending")
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+  approvedById          String?
+  approvedAt            DateTime?
+  effectiveDays         Float
+  approvalStage         String         @default("manager")
+  managerApprovalStatus String?
+  managerApprovedAt     DateTime?
+  managerApprovedById   String?
+  manager               String?
+  ApprovedBy            User?          @relation("ApprovedBy", fields: [approvedById], references: [id])
+  Employee              User           @relation("EmployeeLeaves", fields: [employeeId], references: [id])
+  LeaveHistory          LeaveHistory[]
+
+  @@index([employeeId, startDate, endDate, status])
+}
+
+model LeaveHistory {
+  historyId  String   @id @unique
+  leaveId    String?
+  employeeId String
+  status     String
+  remark     String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime
+  Employee   User     @relation(fields: [employeeId], references: [id], onUpdate: NoAction)
+  Leave      Leave?   @relation(fields: [leaveId], references: [leaveId], onUpdate: NoAction)
+
+  @@index([employeeId, createdAt])
+}
+
+model CompOffHistory {
+  historyId   String   @id @default(uuid())
+  employeeId  String
+  compOffDays Float
+  action      String
+  amount      Float?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  Employee    User     @relation(fields: [employeeId], references: [id])
+
+  @@index([employeeId, createdAt])
+}
+
+model PushMessage {
+  id            String        @id @default(uuid())
+  type          String
+  message       String
+  createdAt     DateTime      @default(now())
+  expiryTime    DateTime
+  read          Boolean       @default(false)
+  recipientType RecipientType
+  userId        String?
+  storeId       String?
+  createdById   String
+  CreatedBy     User          @relation("CreatedBy", fields: [createdById], references: [id])
+  Store         Store?        @relation("StorePushMessages", fields: [storeId], references: [id])
+  User          User?         @relation("UserPushMessages", fields: [userId], references: [id])
+
+  @@index([userId, createdAt])
+  @@index([storeId, createdAt])
+}
+
+model Expense {
+  id                   String   @id @default(uuid())
+  employeeId           String
+  date                 DateTime @db.Date
+  initialReading       Float
+  finalReading         Float
+  totalDistance        Float
+  rate                 Float
+  amount               Float
+  miscellaneousExpense Float    @default(0.0)
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  fuelTotal            Float
+  Employee             User     @relation("EmployeeExpenses", fields: [employeeId], references: [id])
+
+  @@index([employeeId, date])
+}
+
+model Salary {
+  id               String   @id @default(uuid())
+  employeeId       String
+  username         String
+  month            Int
+  year             Int
+  perHourSalary    Float
+  perDaySalary     Float
+  basicSalary      Float
+  absentDays       Float    @default(0)
+  absentHours      Float    @default(0)
+  deductionOfHours Float    @default(0)
+  deductionOfDays  Float    @default(0)
+  totalDeductions  Float    @default(0)
+  overtimeHours    Float    @default(0)
+  overtimePayable  Float    @default(0)
+  netSalary        Float
+  expenses         Float    @default(0)
+  salaryGT         Float
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  bonus            Float    @default(0)
+  overtimeRate     Float    @default(0)
+  publish          Boolean  @default(false)
+  Employee         User     @relation("EmployeeSalaries", fields: [employeeId], references: [id])
+
+  @@unique([employeeId, month, year])
+  @@index([employeeId, month, year])
+}
+
+model OvertimeRequest {
+  id            String    @id @default(uuid())
+  employeeId    String
+  date          DateTime  @db.Date
+  hours         Float
+  remarks       String
+  status        String    @default("pending")
+  approvedHours Float?
+  approverId    String?
+  approvedAt    DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  manager       String?
+  Approver      User?     @relation("ApprovedBy", fields: [approverId], references: [id])
+  Employee      User      @relation("EmployeeOvertimeRequests", fields: [employeeId], references: [id])
+
+  @@index([employeeId, date, status])
+  @@index([approverId])
+}
+
+model Lead {
+  leadNo                String?                 @unique
+  fullName              String
+  contact               String                  @unique
+  altContact            String?
+  address               String
+  city                  String
+  leadSource            String
+  actualSource          String
+  siteStage             String
+  salesPerson           String
+  clientStatus          String?                 @default("Welcome")
+  priority              String?                 @default("p3")
+  status                String?                 @default("pending")
+  assignTo              String?
+  createdAt             DateTime                @default(now())
+  updatedAt             DateTime                @updatedAt
+  employee_id           String
+  lead_id               String                  @id @unique @default(uuid())
+  previous_id           String?
+  followupDate          DateTime?               @default(now())
+  assignToDate          DateTime?               @default(now())
+  lastDate              DateTime?               @default(now())
+  afterSaleService      Boolean?
+  store                 String?
+  engineerTask          String?
+  technicianTask        String?
+  bookingDate           DateTime?
+  handoverDate          DateTime?
+  created_month         String?
+  created_year          String?
+  won_year              String?
+  won_month             String?
+  birthday              DateTime?               @db.Date
+  anniversary           DateTime?               @db.Date
+  call_count            Int                     @default(0)
+  follow_up             follow_up?
+  EngineerTaskHistory   EngineerTaskHistory[]
+  employee              User                    @relation(fields: [employee_id], references: [id], onUpdate: NoAction)
+  store_info            Store?                  @relation("StoreLeads", fields: [store], references: [id])
+  LeadStatusHistory     LeadStatusHistory[]
+  remark                Remarks[]
+  TechnicianTaskHistory TechnicianTaskHistory[]
+  designs               designs[]
+  dimensions            dimensions[]
+}
+
+model ChannelPartner {
+  channelPartnerNo   String?                @unique
+  fullName           String
+  email              String?
+  channelPartnerId   String                 @id @unique @default(uuid())
+  createdAt          DateTime               @default(now())
+  followupDate       DateTime?              @default(now())
+  updatedAt          DateTime               @updatedAt
+  lastDate           DateTime?              @default(now())
+  address            String?
+  city               String?
+  contact            String                 @unique
+  altContact         String?
+  assignTo           String?
+  employee_id        String
+  birthday           DateTime?
+  status             String                 @default("pending")
+  weddingAnniversary DateTime?
+  userType           String
+  firm               String?
+  assignToDate       DateTime?              @default(now())
+  store              String?
+  category_cp        cp                     @default(C)
+  employee           User                   @relation(fields: [employee_id], references: [id], onUpdate: NoAction)
+  store_info         Store?                 @relation("StoreChannelPartners", fields: [store], references: [id])
+  remarks            ChannelPartnerRemark[]
+}
+
+model ChannelPartnerRemark {
+  remarkId             String         @id @unique @default(uuid())
+  channelPartnerNo     String
+  remark               String
+  empName              String
+  empNo                String
+  createdAt            DateTime       @default(now())
+  updatedAt            DateTime       @updatedAt
+  followUpDate         DateTime?
+  channelPartnerID     String
+  remarkchannelPartner ChannelPartner @relation(fields: [channelPartnerID], references: [channelPartnerId], onUpdate: NoAction)
+}
+
+model Remarks {
+  remarkId         String    @id @unique @default(uuid())
+  leadNO           String
+  empNo            String
+  remark           String
+  empName          String
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  afterSaleService Boolean?
+  clientStatus     String?
+  engineerTask     String?
+  siteStage        String?
+  technicianTask   String?
+  followUpDate     DateTime?
+  leads            Lead      @relation(fields: [leadNO], references: [leadNo], onUpdate: NoAction)
+}
+
+model designs {
+  designId  String   @id @unique @default(uuid())
+  leadNO    String
+  empNo     String
+  empName   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  design    String
+  leads     Lead     @relation(fields: [leadNO], references: [leadNo], onUpdate: NoAction)
+}
+
+model dimensions {
+  leadNO      String
+  empNo       String
+  empName     String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  dimension   String
+  dimensionId String   @id @unique @default(uuid())
+  leads       Lead     @relation(fields: [leadNO], references: [leadNo])
+}
+
+model Notification {
+  notiId    Int      @id @default(autoincrement())
+  type      String
+  message   String
+  createdAt DateTime @default(now())
+  read      Boolean  @default(false)
+  userId    String?
+  User      User?    @relation("UserNotifications", fields: [userId], references: [id])
+}
+
+model LeadStatusHistory {
+  created_at  DateTime  @db.Timestamp(6)
+  status      String
+  lead_id     String
+  status_date DateTime? @default(now()) @db.Timestamp(6)
+  id          String    @id @default(uuid())
+  Lead        Lead      @relation(fields: [lead_id], references: [lead_id], onDelete: Cascade)
+}
+
+model EngineerTaskHistory {
+  id           String    @id @default(uuid())
+  lead_id      String
+  engineerTask String
+  statusDate   DateTime? @default(now()) @db.Timestamptz(6)
+  createdAt    DateTime? @default(now()) @db.Timestamptz(6)
+  Lead         Lead      @relation(fields: [lead_id], references: [lead_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_engineer_lead")
+}
+
+model TechnicianTaskHistory {
+  id             String    @id @default(dbgenerated("(gen_random_uuid())::text"))
+  lead_id        String
+  technicianTask String
+  statusDate     DateTime? @default(now()) @db.Timestamptz(6)
+  createdAt      DateTime? @default(now()) @db.Timestamptz(6)
+  Lead           Lead      @relation(fields: [lead_id], references: [lead_id], onDelete: Cascade, onUpdate: NoAction, map: "fk_technician_lead")
+}
+
+enum Role {
+  BASIC
+  ADMIN
+  STOREMANAGER
+  SERVICE
+}
+
+enum cp {
+  A
+  B
+  C
+}
+
+enum follow_up {
+  Physical_Meet @map("Physical Meet")
+  Phone_Call    @map("Phone Call")
+}
+
+enum RecipientType {
+  INDIVIDUAL
+  STORE
+  ALL
+}
+
+enum dept {
+  sales
+  technical
+  engineer
+  afterSales
+  operations
+  design
+  marketing
+  hr
+  storehead
+  generalManager
+  director
+}
+
+enum profile {
+  technician
+  tech_supervisor
+  engineer
+  sr_engineer
+  cc_executive
+  service_manager
+  designer
+  sr_designer
+  sales_executive
+  sr_sales_executive
+  sales_manager
+  cp_manager
+  marketing_executive
+  hr_coordinator
+  hr_coordinator_manager
+  store_director
+  general_manager
+  md
+  site_supervisor
+}

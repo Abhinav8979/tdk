@@ -1,0 +1,175 @@
+/* Toolbar */
+.fc-toolbar-chunk {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap; /* ✅ Wrap on smaller screens */
+}
+
+/* Title (Date text, like "October 2025") */
+.fc-toolbar-title {
+  font-weight: 600;
+  font-size: 1.1rem; /* 🔹 Slightly smaller default */
+  color: var(--foreground);
+  white-space: nowrap;
+}
+
+@media (max-width: 768px) {
+  .fc-toolbar-title {
+    font-size: 0.95rem; /* ✅ Tablet size */
+  }
+}
+
+@media (max-width: 480px) {
+  .fc-toolbar-title {
+    font-size: 0.8rem; /* ✅ Compact on mobile */
+  }
+}
+
+/* Buttons (Prev, Next, Today, Month/Week/Day) */
+.fc-button {
+  background: var(--primary-background) !important;
+  border: none !important;
+  color: white !important;
+  font-weight: 500;
+  padding: 0.25rem 0.6rem; /* 🔹 Reduced default padding */
+  margin: 1px !important;
+  border-radius: 6px;
+  font-size: 0.8rem; /* 🔹 Smaller text size */
+  min-width: 45px;
+  transition: background-color 0.3s ease;
+}
+
+.fc-button:hover,
+.fc-button:focus {
+  background: #99b001 !important;
+  outline: none !important;
+}
+
+.fc-button:disabled {
+  background: #cdd18f !important;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+@media (max-width: 768px) {
+  .fc-button {
+    font-size: 0.7rem; /* ✅ Smaller for tablets */
+    padding: 0.2rem 0.5rem;
+    min-width: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .fc-button {
+    font-size: 0.65rem; /* ✅ Compact for mobile */
+    padding: 0.15rem 0.4rem;
+    min-width: 35px;
+  }
+}
+
+/* Day cells */
+.fc-daygrid-day {
+  border-radius: 6px;
+  transition: background-color 0.2s ease;
+  height: 55px;
+  max-height: 55px;
+  padding: 2px;
+}
+
+.fc-daygrid-day:hover {
+  background-color: var(--secondary-background);
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .fc-daygrid-day {
+    height: 45px;
+    max-height: 45px;
+  }
+}
+@media (max-width: 480px) {
+  .fc-daygrid-day {
+    height: 38px;
+    max-height: 38px;
+  }
+}
+
+/* Day numbers */
+.fc-daygrid-day-number {
+  font-weight: 600;
+  color: var(--foreground);
+  padding: 1px 4px;
+  border-radius: 4px;
+  display: inline-block;
+  margin: 2px;
+  font-size: 0.7rem;
+}
+
+@media (max-width: 480px) {
+  .fc-daygrid-day-number {
+    font-size: 0.6rem;
+  }
+}
+
+/* Events */
+.fc-event {
+  background-color: var(--primary-background) !important;
+  color: white !important;
+  border-radius: 6px !important;
+  padding: 2px 5px !important;
+  font-weight: 500 !important;
+  font-size: 0.7rem !important;
+  box-shadow: 0 2px 5px rgba(180, 202, 1, 0.6);
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fc-event:hover {
+  background-color: #99b001 !important;
+}
+
+.fc-event-time {
+  display: none !important;
+}
+
+.fc-daygrid-day-events {
+  width: 100% !important;
+  height: 40px !important;
+  overflow: hidden;
+}
+
+.fc-daygrid-event-dot {
+  display: none !important;
+}
+
+.fc-daygrid-event {
+  position: absolute;
+  inset: 0;
+  height: 40px !important;
+  text-align: center;
+  font-size: 0.7rem !important;
+}
+
+@media (max-width: 768px) {
+  .fc-event {
+    font-size: 0.65rem !important;
+    padding: 1px 3px !important;
+  }
+  .fc-daygrid-event {
+    height: 32px !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .fc-event {
+    font-size: 0.55rem !important;
+    padding: 1px 2px !important;
+  }
+  .fc-daygrid-event {
+    height: 26px !important;
+  }
+}
