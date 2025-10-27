@@ -2,6 +2,7 @@ import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
+import { $Enums } from "@prisma/client";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -21,7 +22,9 @@ export const authOptions: NextAuthOptions = {
         });
 
         if (user?.restricted) {
-          throw new Error("Your account is restricted. Please contact support.");
+          throw new Error(
+            "Your account is restricted. Please contact support."
+          );
         }
 
         if (!user || !user.password) {
@@ -88,7 +91,7 @@ export const authOptions: NextAuthOptions = {
           profilePicture: token.profilePicture,
           isHrPortalFirstLogin: token.isHrPortalFirstLogin,
           userType: token.userType,
-          role: token.role,
+          role: token.role as $Enums.Role,
           referenceEmployee: token.referenceEmployee,
           reportingManager: token.reportingManager,
           empNo: token.empNo,
@@ -100,13 +103,13 @@ export const authOptions: NextAuthOptions = {
         };
 
         // Handle store association logic
-        if (typeof token.store === 'string' && token.store.trim() !== '') {
+        if (typeof token.store === "string" && token.store.trim() !== "") {
           try {
             await db.$transaction(async (tx) => {
-              const storeName = (token.store ?? '').trim();
+              const storeName = (token.store ?? "").trim();
 
               // Check if user is HR
-              const isHr = token.profile === 'hr_coordinator';
+              const isHr = token.profile === "hr_coordinator";
 
               // Remove HR from incorrect stores
               if (isHr) {
@@ -119,7 +122,9 @@ export const authOptions: NextAuthOptions = {
 
                 for (const store of storesWithHr) {
                   if (store.name.toLowerCase() !== storeName.toLowerCase()) {
-                    console.log(`Removing HR ${token.userId} from store: ${store.name} (id: ${store.id})`);
+                    console.log(
+                      `Removing HR ${token.userId} from store: ${store.name} (id: ${store.id})`
+                    );
                     await tx.store.update({
                       where: { id: store.id },
                       data: { hrs: { disconnect: { id: token.userId } } },
@@ -131,7 +136,7 @@ export const authOptions: NextAuthOptions = {
               // Check if store exists (case-insensitive)
               let store = await tx.store.findFirst({
                 where: {
-                  name: { equals: storeName, mode: 'insensitive' },
+                  name: { equals: storeName, mode: "insensitive" },
                 },
                 select: { id: true, name: true, hrs: { select: { id: true } } },
               });
@@ -144,7 +149,11 @@ export const authOptions: NextAuthOptions = {
                     name: storeName,
                     ...(isHr ? { hrs: { connect: { id: token.userId } } } : {}),
                   },
-                  select: { id: true, name: true, hrs: { select: { id: true } } },
+                  select: {
+                    id: true,
+                    name: true,
+                    hrs: { select: { id: true } },
+                  },
                 });
 
                 await tx.calendar.create({
@@ -176,7 +185,9 @@ export const authOptions: NextAuthOptions = {
 
                 // If HR, ensure connected to store's hrs relation
                 if (isHr && !store.hrs.some((h) => h.id === token.userId)) {
-                  console.log(`Associating HR ${token.userId} with store: ${store.name} (id: ${store.id})`);
+                  console.log(
+                    `Associating HR ${token.userId} with store: ${store.name} (id: ${store.id})`
+                  );
                   await tx.store.update({
                     where: { id: store.id },
                     data: {

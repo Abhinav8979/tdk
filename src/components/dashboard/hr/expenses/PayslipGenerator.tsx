@@ -523,6 +523,16 @@ const PayslipGenerator = ({
           </div>
         )}
 
+        {!editable && (
+          <button
+            onClick={exportToPDF}
+            className="flex items-center justify-center gap-2 px-4 py-3 rounded-md text-white font-medium hover:opacity-90 transition-opacity bg-[var(--primary-background)] text-sm sm:text-base"
+          >
+            <FaDownload size={18} />
+            Export to PDF
+          </button>
+        )}
+
         {/* Payslip Display */}
         <div
           id="payslip-content"

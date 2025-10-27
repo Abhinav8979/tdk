@@ -550,13 +550,17 @@ export const useCreateOvertimeRequest = () =>
     },
   });
 
-export const useGetOvertimeRequest = () => {
-  return useQuery<OvertimeRequest>({
-    queryKey: ["overtimeRequest"],
+export const useGetOvertimeRequest = (params = {}) => {
+  const queryKey = ["overtimeRequest", params];
+
+  return useQuery({
+    queryKey,
     queryFn: async () => {
-      const { data } = await axios.get("/api/overtime-requests");
+      const query = new URLSearchParams(params).toString();
+      const { data } = await axios.get(`/api/overtime-requests?${query}`);
       return data;
     },
+    enabled: !!params,
   });
 };
 

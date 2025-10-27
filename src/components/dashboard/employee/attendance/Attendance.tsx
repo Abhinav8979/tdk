@@ -4,6 +4,7 @@ import AttendanceSkeleton from "@/components/skeleton/employee/attendance/Attend
 import {
   useGetEmployeeAttendance,
   useGetEmployeeAttendanceSummary,
+  useGetOvertimeRequest,
 } from "@/hooks/RTKHooks";
 import { useSession } from "next-auth/react";
 import React, { useEffect, useState } from "react";
@@ -15,6 +16,9 @@ import {
   MdCheckCircle,
   MdCancel,
   MdRemoveCircle,
+  MdPendingActions,
+  MdTaskAlt,
+  MdError,
 } from "react-icons/md";
 import AttendanceSummary from "./AttendanceSummary";
 
@@ -68,6 +72,23 @@ interface AttendanceAPIResponse {
   attendance: AttendanceRecord[];
 }
 
+// Overtime Request Interface
+interface OvertimeRequest {
+  id: string;
+  employeeId: string;
+  employeeName: string;
+  date: string;
+  hours: number;
+  remarks: string;
+  manager: string | null;
+  status: "pending" | "approved" | "rejected";
+  approvedHours?: number;
+  approverId: string | null;
+  approvedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
 const Attendance: React.FC = () => {
   const session = useSession();
   const [id, setId] = useState<string | null | undefined>(undefined);
@@ -86,14 +107,16 @@ const Attendance: React.FC = () => {
     0
   );
 
-  const { data, isPending } = useGetEmployeeAttendance({
-    employeeId: id,
-    startDate: startDate.toISOString().split("T")[0],
-    endDate: endDate.toISOString().split("T")[0],
-    storeId,
-  });
+  const { data: attendanceData, isPending: attendancePending } =
+    useGetEmployeeAttendance({
+      employeeId: id,
+      startDate: startDate.toISOString().split("T")[0],
+      endDate: endDate.toISOString().split("T")[0],
+      storeId,
+    });
 
-  console.log(data);
+  const { data: overtimeData, isPending: overtimePending } =
+    useGetOvertimeRequest({ employeeId: id });
 
   const { data: summaryData, isPending: summaryPending } =
     useGetEmployeeAttendanceSummary({
@@ -134,7 +157,7 @@ const Attendance: React.FC = () => {
   };
 
   const getAttendanceForDay = (day: number): AttendanceRecord | null => {
-    if (!data || !day) return null;
+    if (!attendanceData || !day) return null;
 
     const dateStr: string = new Date(
       currentDate.getFullYear(),
@@ -147,10 +170,14 @@ const Attendance: React.FC = () => {
     // Fixed: Handle both possible data structures
     let attendanceArray: AttendanceRecord[] = [];
 
-    if (Array.isArray(data)) {
-      attendanceArray = data;
-    } else if (data && typeof data === "object" && "attendance" in data) {
-      attendanceArray = (data as AttendanceAPIResponse).attendance;
+    if (Array.isArray(attendanceData)) {
+      attendanceArray = attendanceData;
+    } else if (
+      attendanceData &&
+      typeof attendanceData === "object" &&
+      "attendance" in attendanceData
+    ) {
+      attendanceArray = (attendanceData as AttendanceAPIResponse).attendance;
     }
 
     const attendanceRecord: AttendanceRecord | undefined = attendanceArray.find(
@@ -218,6 +245,42 @@ const Attendance: React.FC = () => {
     });
   };
 
+  const formatOvertimeDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const getStatusIcon = (status: string) => {
+    switch (status) {
+      case "approved":
+        return <MdTaskAlt className="w-5 h-5 text-green-600" />;
+      case "rejected":
+        return <MdError className="w-5 h-5 text-red-600" />;
+      case "pending":
+        return <MdPendingActions className="w-5 h-5 text-yellow-600" />;
+      default:
+        return null;
+    }
+  };
+
+  const getStatusColor = (status: string): string => {
+    switch (status) {
+      case "approved":
+        return "bg-green-100 border-green-200";
+      case "rejected":
+        return "bg-red-100 border-red-200";
+      case "pending":
+        return "bg-yellow-100 border-yellow-200";
+      default:
+        return "bg-gray-100 border-gray-200";
+    }
+  };
+
   const monthNames: string[] = [
     "January",
     "February",
@@ -234,7 +297,7 @@ const Attendance: React.FC = () => {
   ];
 
   const getAttendanceSummary = (): AttendanceSummary => {
-    if (!data) return { present: 0, absent: 0, late: 0, total: 0 };
+    if (!attendanceData) return { present: 0, absent: 0, late: 0, total: 0 };
 
     const workDays: number[] = getDaysInMonth().filter((day: number) => {
       const dayOfWeek: number = new Date(
@@ -279,7 +342,7 @@ const Attendance: React.FC = () => {
   }
 
   // Show skeleton loading instead of the simple loading spinner
-  if (isPending || summaryPending) {
+  if (attendancePending || summaryPending) {
     return <AttendanceSkeleton />;
   }
 
@@ -332,37 +395,76 @@ const Attendance: React.FC = () => {
               </button>
             </div>
           </div>
+        </div>
 
-          {/* Monthly Attendance Summary - Responsive Grid */}
-          {/* <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-4 sm:mb-6">
-            <div className="bg-[var(--tertiary-background)] rounded-lg p-3 sm:p-4 text-center">
-              <div className="text-xl sm:text-2xl font-bold text-[var(--foreground)]">
-                {summary.total}
-              </div>
-              <div className="text-xs sm:text-sm text-gray-600">Total Days</div>
-            </div>
-            <div className="bg-green-50 rounded-lg p-3 sm:p-4 text-center">
-              <div className="text-xl sm:text-2xl font-bold text-green-700">
-                {summary.present}
-              </div>
-              <div className="text-xs sm:text-sm text-green-600">Present</div>
-            </div>
-            <div className="bg-yellow-50 rounded-lg p-3 sm:p-4 text-center">
-              <div className="text-xl sm:text-2xl font-bold text-yellow-700">
-                {summary.late}
-              </div>
-              <div className="text-xs sm:text-sm text-yellow-600">Late</div>
-            </div>
-            <div className="bg-red-50 rounded-lg p-3 sm:p-4 text-center">
-              <div className="text-xl sm:text-2xl font-bold text-red-700">
-                {summary.absent}
-              </div>
-              <div className="text-xs sm:text-sm text-red-600">Absent</div>
-            </div>
-          </div> */}
+        {/* Overtime Request History Section */}
+        <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 mb-4 sm:mb-6">
+          <div className="flex items-center gap-3 mb-4">
+            <MdAccessTime className="w-5 h-5 sm:w-6 sm:h-6 text-[var(--primary-background)]" />
+            <h3 className="text-base sm:text-lg font-semibold text-[var(--foreground)]">
+              Overtime Request History
+            </h3>
+          </div>
 
-          {/* Overall Attendance Summary from API */}
-          {/* {apiSummary && <AttendanceSummary />} */}
+          {overtimePending ? (
+            <div className="text-center py-8 text-gray-500">
+              Loading overtime requests...
+            </div>
+          ) : !overtimeData || overtimeData.length === 0 ? (
+            <div className="text-center py-8 text-gray-500">
+              No overtime requests found
+            </div>
+          ) : (
+            <div className="space-y-2 sm:space-y-3 max-h-72 overflow-y-auto">
+              {overtimeData.map((request: OvertimeRequest) => (
+                <div
+                  key={request.id}
+                  className={`flex flex-col sm:flex-row sm:items-center sm:justify-between p-3 sm:p-4 rounded-lg border transition-all hover:shadow-md ${getStatusColor(
+                    request.status
+                  )}`}
+                >
+                  <div className="flex items-center gap-3 sm:gap-4 mb-2 sm:mb-0">
+                    {getStatusIcon(request.status)}
+
+                    <div className="flex-1">
+                      <div className="font-semibold text-sm sm:text-base text-[var(--foreground)]">
+                        {formatOvertimeDate(request.date)}
+                      </div>
+                      <div className="text-xs sm:text-sm text-gray-600">
+                        {request.hours} {request.hours === 1 ? "hour" : "hours"}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-3 sm:gap-6 pl-8 sm:pl-0">
+                    <div className="text-xs sm:text-sm">
+                      <div className="text-gray-500">Status</div>
+                      <div
+                        className={`font-semibold capitalize ${
+                          request.status === "approved"
+                            ? "text-green-700"
+                            : request.status === "rejected"
+                            ? "text-red-700"
+                            : "text-yellow-700"
+                        }`}
+                      >
+                        {request.status}
+                      </div>
+                    </div>
+
+                    {request.manager && (
+                      <div className="text-xs sm:text-sm text-center">
+                        <div className="text-gray-500">Manager</div>
+                        <div className="font-semibold text-[var(--foreground)]">
+                          {request.manager}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Attendance List View - Mobile Optimized */}

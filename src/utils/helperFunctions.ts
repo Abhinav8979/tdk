@@ -1,5 +1,3 @@
-import * as XLSX from "xlsx";
-
 export function getCurrentYear(): number {
   return new Date().getFullYear();
 }
@@ -64,8 +62,6 @@ interface EmployeeAttendance {
   employeeId: string | number;
   attendance: AttendanceEntry[];
 }
-
-
 
 export const calculateWorkingHours = (
   inTime: string | null,

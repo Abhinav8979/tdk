@@ -215,10 +215,6 @@ const HRProfileView: React.FC = () => {
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          {/* <div className="inline-flex items-center space-x-2 bg-white rounded-full px-6 py-2 shadow-sm border border-gray-200 mb-4">
-            <FaIdBadge size={20} className="text-green-600" />
-            <span className="text-sm font-medium text-gray-600">HR Portal</span>
-          </div> */}
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
             Employee Profile
           </h1>

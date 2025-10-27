@@ -14,7 +14,7 @@ const Page = async ({ searchParams }: PageProps) => {
   const attendanceData = params.manageTimeOff;
 
   return (
-    <main className="h-screen overflow-y-scroll">
+    <main className="h-screen p-4 sm:p-6">
       <div className="max-w-7xl mx-auto space-y-6 sm:space-y-8">
         {/* Header */}
         <header className="mb-2">

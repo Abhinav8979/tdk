@@ -455,10 +455,7 @@ const AttendanceTable: React.FC = () => {
   }
 
   return (
-    <div
-      className="min-h-screen p-4 sm:p-6"
-      style={{ backgroundColor: colors.tertiary }}
-    >
+    <div className="min-h-screen" style={{ backgroundColor: colors.tertiary }}>
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-4 sm:mb-6">
@@ -598,26 +595,6 @@ const AttendanceTable: React.FC = () => {
                 <option value="absent">Absent</option>
                 <option value="late">Late</option>
                 <option value="early_exit">Early Exit</option>
-              </select>
-            </div>
-
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              <span className="text-xs sm:text-sm text-gray-600">Show:</span>
-              <select
-                value={itemsPerPage}
-                onChange={handleItemsPerPageChange}
-                className="flex-1 sm:flex-none px-3 py-2 text-sm sm:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-opacity-20 focus:border-transparent outline-none"
-                style={
-                  {
-                    "--tw-ring-color": colors.primary + "33",
-                  } as React.CSSProperties
-                }
-              >
-                <option value={5}>5 per page</option>
-                <option value={10}>10 per page</option>
-                <option value={25}>25 per page</option>
-                <option value={50}>50 per page</option>
-                <option value={100}>100 per page</option>
               </select>
             </div>
           </div>
@@ -793,9 +770,9 @@ const AttendanceTable: React.FC = () => {
         </div>
 
         {/* Desktop Table Layout - visible on larger screens */}
-        <div className="hidden sm:block bg-white rounded-lg shadow-sm border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="w-full">
+        <div className="hidden sm:block  bg-white min-w-1/2 w-[80vw]   rounded-lg shadow-sm border overflow-hidden">
+          <div className="overflow-x-scroll">
+            <table className="w-full ">
               <thead style={{ backgroundColor: colors.primary }}>
                 <tr>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-white">

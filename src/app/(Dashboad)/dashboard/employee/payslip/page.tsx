@@ -122,7 +122,6 @@ export default function MonthSelector() {
         )}
       </div>
 
-      {/* Payslip Generator */}
       {session && "userId" in session.user && (
         <PayslipGenerator
           id={(session.user as { userId: string }).userId}

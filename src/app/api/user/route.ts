@@ -456,6 +456,8 @@ export async function PUT(req: Request) {
             upsert: true,
           });
 
+        // console.log(error);
+
         if (error) {
           throw new Error(`Failed to upload ${file.name}: ${error.message}`);
         }

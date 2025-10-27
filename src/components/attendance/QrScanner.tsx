@@ -4,7 +4,6 @@ import { useState } from "react";
 import dynamic from "next/dynamic";
 import type { QrReaderProps } from "react-qr-reader";
 
-// Dynamically import the component itself
 const QrReader = dynamic<QrReaderProps>(
   () => import("react-qr-reader").then((mod) => mod.QrReader),
   { ssr: false }

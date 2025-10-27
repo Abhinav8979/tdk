@@ -1,11 +1,12 @@
 import React from "react";
-import { FaBriefcase, FaIdCard } from "react-icons/fa";
+import { FaBriefcase, FaIdCard, FaUser } from "react-icons/fa";
 
 type Employee = {
   username: string;
   empNo: string;
   userType?: string;
   role?: string;
+  profilePicture?: string;
 };
 
 type Props = {
@@ -15,12 +16,22 @@ type Props = {
 const EmployeeDetailsHeader: React.FC<Props> = ({ employee }) => {
   return (
     <div className="flex flex-col sm:flex-row items-center sm:items-start gap-4 sm:gap-6 w-full p-4 bg-white rounded-2xl shadow-sm">
-      {/* Avatar / Initials */}
-      <div className="text-[#b4ca01] rounded-full h-20 w-20 sm:h-24 sm:w-24 flex items-center justify-center text-2xl sm:text-3xl font-bold shadow-lg flex-shrink-0">
-        {employee?.username
-          ?.split(" ")
-          .map((name) => name[0])
-          .join("")}
+      {/* Avatar / Profile Picture */}
+      <div className="relative h-20 w-20 sm:h-24 sm:w-24 flex-shrink-0">
+        {employee?.profilePicture ? (
+          <img
+            src={employee.profilePicture}
+            alt={employee.username}
+            className="h-full w-full rounded-full object-cover shadow-lg border-2 border-[#b4ca01]"
+          />
+        ) : (
+          <div className="bg-[#b4ca01] rounded-full h-full w-full flex items-center justify-center text-white text-2xl sm:text-3xl font-bold shadow-lg">
+            {employee?.username
+              ?.split(" ")
+              .map((name) => name[0])
+              .join("") || <FaUser />}
+          </div>
+        )}
       </div>
 
       {/* Details */}

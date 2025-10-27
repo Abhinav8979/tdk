@@ -3,7 +3,9 @@ import PayrollSystemSkeleton from "@/components/skeleton/Hr/payslipTable/Payslip
 import { useAppDispatch } from "@/hooks/ReduxSelector";
 import { useGetPayslips } from "@/hooks/RTKHooks";
 import { rootHrRoute } from "@/lib/paths";
+// import { exportToExcelPayslips } from "@/lib/exportToExcelPayslips";
 import { setLoading } from "@/redux/store/utils";
+import { exportToExcelPayslips } from "@/utils/ExportFunction";
 import { useRouter } from "next/navigation";
 import React, { useState, useEffect } from "react";
 import {
@@ -16,6 +18,7 @@ import {
   MdLastPage,
   MdSearch,
   MdClear,
+  MdFileDownload,
 } from "react-icons/md";
 
 interface Employee {
@@ -157,6 +160,14 @@ const PayrollSystem = () => {
 
   const clearSearch = () => {
     setSearchTerm("");
+  };
+
+  const handleExportToExcel = () => {
+    exportToExcelPayslips({
+      employees: filteredEmployees,
+      month: months[currentMonth],
+      year: currentYear,
+    });
   };
 
   const getVisiblePages = () => {
@@ -325,8 +336,8 @@ const PayrollSystem = () => {
           </div>
         </div>
 
-        {/* Search Box */}
-        <div className="mb-6 flex justify-center">
+        {/* Search Box and Export Button */}
+        <div className="mb-6 flex flex-col sm:flex-row justify-center items-center gap-3">
           <div className="bg-white rounded-2xl shadow-lg border border-lime-100 p-1 w-full max-w-md">
             <div className="relative flex items-center">
               <MdSearch size={20} className="absolute left-4 text-stone-500" />
@@ -347,6 +358,20 @@ const PayrollSystem = () => {
               )}
             </div>
           </div>
+
+          {/* Export to Excel Button */}
+          <button
+            onClick={handleExportToExcel}
+            disabled={filteredEmployees.length === 0}
+            className={`flex items-center gap-2 px-6 py-3 rounded-2xl font-medium shadow-lg transition-all whitespace-nowrap ${
+              filteredEmployees.length === 0
+                ? "bg-stone-200 text-stone-400 cursor-not-allowed"
+                : "bg-green-500 hover:bg-green-600 text-white hover:shadow-xl"
+            }`}
+          >
+            <MdFileDownload size={20} />
+            Export to Excel
+          </button>
         </div>
 
         {/* Search Results Info */}
@@ -362,7 +387,6 @@ const PayrollSystem = () => {
           </div>
         )}
 
-        {/* Payroll Table */}
         {/* Desktop Table View - Hidden on mobile */}
         <div className="hidden lg:block overflow-x-auto">
           <table className="w-full">
@@ -604,6 +628,14 @@ const PayrollSystem = () => {
                   {/* Action Button */}
                   <button
                     disabled={isFutureMonth}
+                    onClick={() => {
+                      dispatch(setLoading(true));
+                      router.push(
+                        `${rootHrRoute}/payslips/${employee.employeeId}?month=${
+                          currentMonth + 1 === 13 ? 1 : currentMonth + 1
+                        }&year=${currentYear}`
+                      );
+                    }}
                     className={`w-full px-4 py-2.5 rounded-xl font-medium flex items-center justify-center gap-2 transition-all ${
                       isFutureMonth
                         ? "bg-stone-200 text-stone-400 cursor-not-allowed"

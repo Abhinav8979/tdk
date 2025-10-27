@@ -4,6 +4,31 @@ import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 import { EmployeeExpenses } from "@/types/hrDashboard.types";
 
+interface Employee {
+  employeeId: string;
+  email: string;
+  username: string;
+  storeId: string;
+  storeName: string;
+  salaries: Salary[];
+}
+
+interface Salary {
+  id?: string;
+  basicSalary: number;
+  month: string;
+  year: number;
+  absentDays?: number;
+  totalDeductions?: number;
+  netSalary?: number;
+}
+
+interface ExportPayslipsParams {
+  employees: Employee[];
+  month: string;
+  year: number;
+}
+
 export const exportToExcelAttendance = (
   data: any[],
   fileName: string,
@@ -337,4 +362,105 @@ export const exportToPDFExpenses = (
   });
 
   doc.save(`Employee_Expenses_${selectedDate}.pdf`);
+};
+
+export const exportToExcelPayslips = ({
+  employees,
+  month,
+  year,
+}: ExportPayslipsParams) => {
+  // Create workbook
+  const wb = XLSX.utils.book_new();
+
+  // Prepare header data
+  const headerData = [
+    [`Payroll Report - ${month} ${year}`],
+    [`Generated on: ${new Date().toLocaleDateString()}`],
+    [], // Empty row for spacing
+    [
+      "Employee Name",
+      "Email",
+      "Basic Salary",
+      "Absent Days",
+      "Absent Deduction",
+      "Other Deductions",
+      "Total Deductions",
+      "Net Salary",
+    ],
+  ];
+
+  // Prepare employee data
+  const employeeData = employees.map((employee) => {
+    const basicSalary = employee.salaries[0]?.basicSalary || 0;
+    const absentDays = employee.salaries[0]?.absentDays || 0;
+    const totalDeductions = employee.salaries[0]?.totalDeductions || 0;
+    const perDayDeduction = basicSalary > 0 ? Math.round(basicSalary / 30) : 0;
+    const absenteeDeduction = absentDays * perDayDeduction;
+    const netSalary = employee.salaries[0]?.netSalary ?? 0;
+
+    return [
+      employee.username,
+      employee.email,
+      basicSalary,
+      absentDays,
+      absenteeDeduction,
+      totalDeductions,
+      absenteeDeduction + totalDeductions,
+      netSalary,
+    ];
+  });
+
+  // Combine all data
+  const allData = [...headerData, ...employeeData];
+
+  // Add summary row
+  const totalBasicSalary = employees.reduce(
+    (sum, emp) => sum + (emp.salaries[0]?.basicSalary || 0),
+    0
+  );
+  const totalNetSalary = employees.reduce(
+    (sum, emp) => sum + (emp.salaries[0]?.netSalary ?? 0),
+    0
+  );
+  const totalAbsentDays = employees.reduce(
+    (sum, emp) => sum + (emp.salaries[0]?.absentDays || 0),
+    0
+  );
+
+  allData.push(
+    [], // Empty row
+    ["TOTAL", "", totalBasicSalary, totalAbsentDays, "", "", "", totalNetSalary]
+  );
+
+  // Create worksheet
+  const ws = XLSX.utils.aoa_to_sheet(allData);
+
+  // Set column widths
+  ws["!cols"] = [
+    { wch: 25 }, // Employee Name
+    { wch: 30 }, // Email
+    { wch: 15 }, // Basic Salary
+    { wch: 12 }, // Absent Days
+    { wch: 18 }, // Absent Deduction
+    { wch: 18 }, // Other Deductions
+    { wch: 18 }, // Total Deductions
+    { wch: 15 }, // Net Salary
+  ];
+
+  // Merge cells for title
+  ws["!merges"] = [
+    { s: { r: 0, c: 0 }, e: { r: 0, c: 7 } }, // Title row
+    { s: { r: 1, c: 0 }, e: { r: 1, c: 7 } }, // Date row
+  ];
+
+  // Add worksheet to workbook
+  XLSX.utils.book_append_sheet(wb, ws, "Payroll Report");
+
+  // Generate file name
+  const fileName = `Payroll_${month}_${year}_${
+    new Date().toISOString().split("T")[0]
+  }.xlsx`;
+
+  // Save file
+  XLSX.writeFile(wb, fileName);
 };

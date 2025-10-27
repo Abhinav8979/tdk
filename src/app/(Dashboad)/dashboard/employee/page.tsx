@@ -113,7 +113,7 @@ const Dashboard = () => {
       <div className="flex flex-col md:flex-row justify-between items-center mb-12 bg-white rounded-2xl shadow-lg p-8">
         <div className="flex items-center space-x-6">
           <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[var(--primary-background)] text-white flex items-center justify-center text-2xl font-bold">
-            {getUserInitials(name)}
+            {getUserInitials(name)} 
           </div>
           <div>
             <h2 className="text-2xl md:text-3xl font-bold text-[var(--foreground)]">
