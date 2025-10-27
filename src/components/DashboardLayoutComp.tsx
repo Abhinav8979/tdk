@@ -1,6 +1,6 @@
 "use client";
 
-import React, { ReactNode, useEffect, useState } from "react";
+import React, { ReactNode, Suspense, useEffect, useState } from "react";
 import Sidebar from "./dashboard/sidebar/Sidebar";
 import TopBar from "./dashboard/topbar/TopBar";
 
@@ -24,8 +24,10 @@ const DashboardLayoutComp = ({ children }: { children: ReactNode }) => {
     <>
       <Sidebar setCollapse={setCollapse} collapse={collapse} />
       <div className="flex-1 flex flex-col">
-        <TopBar setCollapse={setCollapse} />
-        <main className="overflow-y-auto">{children}</main>
+        <Suspense fallback={<div>Loading Leave...</div>}>
+          <TopBar setCollapse={setCollapse} />
+          <main className="overflow-y-auto">{children}</main>
+        </Suspense>
       </div>
     </>
   );

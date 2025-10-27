@@ -1,12 +1,14 @@
-import Attendance from '@/components/dashboard/employee/attendance/Attendance'
-import React from 'react'
+import React, { Suspense } from "react";
+import Attendance from "@/components/dashboard/employee/attendance/Attendance";
 
-const page = () => {
+const Page = () => {
   return (
     <div>
-       <Attendance />
+      <Suspense fallback={<div>Loading Attendance...</div>}>
+        <Attendance />
+      </Suspense>
     </div>
-  )
-}
+  );
+};
 
-export default page
+export default Page;

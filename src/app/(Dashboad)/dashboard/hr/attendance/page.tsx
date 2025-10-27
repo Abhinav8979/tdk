@@ -1,6 +1,6 @@
 import EmployeeAttendanceTable from "@/components/dashboard/hr/attendance/EmployeeAttendance";
 import ManageTimeOff from "@/components/dashboard/hr/attendance/ManageTimeOff";
-import React from "react";
+import React, { Suspense } from "react";
 
 interface PageProps {
   searchParams: Promise<{
@@ -31,7 +31,9 @@ const Page = async ({ searchParams }: PageProps) => {
           <h2 className="text-lg sm:text-xl font-medium text-gray-800">
             Manage Time Off
           </h2>
-          <ManageTimeOff params={attendanceData} />
+          <Suspense fallback={<div>Loading Leave...</div>}>
+            <ManageTimeOff params={attendanceData} />
+          </Suspense>
         </section>
 
         {/* Employee Attendance Table Section */}

@@ -7,7 +7,6 @@ import ModalLayout from "@/layouts/ModalLayout";
 import LeaveForm from "./leave props/LeaveForm";
 import CustomToolbarCalendar from "@/components/ui/calendar/Calendar";
 import LeaveHistoryTable from "./leave props/LeaveHistoryTable";
-import AttendanceSummary from "../attendance/AttendanceSummary";
 
 const Leave = () => {
   const router = useRouter();
@@ -79,7 +78,10 @@ const Leave = () => {
         </div>
 
         {view === "toolbar" ? (
-          <CustomToolbarCalendar isEditable={false} />
+          <CustomToolbarCalendar
+            storeName="leave-calendar"
+            isEditable={false}
+          />
         ) : (
           <LeaveHistoryTable />
         )}

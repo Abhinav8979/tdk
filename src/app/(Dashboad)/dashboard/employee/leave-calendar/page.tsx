@@ -1,10 +1,12 @@
+import React, { Suspense } from "react";
 import Leave from "@/components/dashboard/employee/leave/Leave";
-import React from "react";
 
 const Page = () => {
   return (
     <section>
-      <Leave />
+      <Suspense fallback={<div>Loading Leave...</div>}>
+        <Leave />
+      </Suspense>
     </section>
   );
 };

@@ -23,10 +23,10 @@ import CalendarSkeleton from "../skeletonLoading/CalendarSkeletonLoading";
 
 const CustomToolbarCalendar = ({
   isEditable = false,
-  storeName,
+  storeName = null,
 }: {
   isEditable: boolean;
-  storeName: string;
+  storeName: string | null;
 }) => {
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [formData, setFormData] = useState<FormData>({ title: "", reason: "" });
@@ -90,7 +90,7 @@ const CustomToolbarCalendar = ({
         date: formattedDate,
         reason: formData.title,
         title: formData.title,
-        storeName: storeName,
+        storeName: storeName || " ",
         editing: formData.editing || false,
       },
       {

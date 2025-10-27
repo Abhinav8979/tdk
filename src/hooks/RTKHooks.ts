@@ -13,7 +13,6 @@ import type {
   PersonalDetails,
 } from "@/types/employeeDashboard.types";
 import { EmployeeDetails, ExpensePayload } from "@/types/hrDashboard.types";
-import { OvertimeRequest } from "@/types/modal.types";
 
 export function useLoginMutation() {
   const router = useRouter();

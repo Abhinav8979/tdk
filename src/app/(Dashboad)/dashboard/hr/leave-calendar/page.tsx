@@ -2,7 +2,7 @@
 
 import AttendanceCalendar2 from "@/components/ui/calendar/Calendar";
 import HrLeave from "@/components/dashboard/hr/leave/HrLeave";
-import React from "react";
+import React, { Suspense } from "react";
 import { useRouter } from "next/navigation";
 import { FaListAlt } from "react-icons/fa";
 import { useSession } from "next-auth/react";
@@ -53,7 +53,9 @@ const Page = () => {
             <FaListAlt className="w-4 h-4" />
             View Leave Requests
           </button>
-          <HrLeave />
+          <Suspense fallback={<div>Loading Leave...</div>}>
+            <HrLeave />
+          </Suspense>
         </div>
       </div>
 
