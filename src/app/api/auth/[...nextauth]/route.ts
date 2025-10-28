@@ -2,7 +2,6 @@ import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
-import { $Enums } from "@prisma/client";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -91,7 +90,7 @@ export const authOptions: NextAuthOptions = {
           profilePicture: token.profilePicture,
           isHrPortalFirstLogin: token.isHrPortalFirstLogin,
           userType: token.userType,
-          role: token.role as $Enums.Role,
+          role: token.role as any,
           referenceEmployee: token.referenceEmployee,
           reportingManager: token.reportingManager,
           empNo: token.empNo,
