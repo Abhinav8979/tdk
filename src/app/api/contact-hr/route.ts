@@ -109,12 +109,6 @@ async function sendEmail({
     .replace("{{message}}", message.replace(/\n/g, "<br>")) // Convert newlines to <br> for HTML
     .replace("{{hrPortalUrl}}", hrPortalUrl);
 
-  // Replace with your actual email service (e.g., Nodemailer, SendGrid)
-  console.log(`Sending email to: ${to.join(", ")}`);
-  console.log(`From: ${from}`);
-  console.log(`Subject: ${subject}`);
-  console.log(`HTML Content: ${htmlContent}`);
-
   const transporter = nodemailer.createTransport({
     service: "gmail",
     auth: { user: process.env.EMAIL_USER, pass: process.env.EMAIL_PASS },
