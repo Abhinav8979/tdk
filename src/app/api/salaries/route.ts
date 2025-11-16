@@ -40,6 +40,7 @@ const salarySchema = z
       .optional()
       .default(0),
     publish: z.boolean().optional(),
+    store: z.string().optional(),
   })
   .strict();
 
@@ -162,7 +163,6 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    console.log(body);
     const parsed = salarySchema.safeParse(body.payload);
     if (!parsed.success) {
       return NextResponse.json(
@@ -182,6 +182,7 @@ export async function POST(req: Request) {
       deductionOfHours,
       deductionOfDays,
       overtimeHours,
+      store,
     } = parsed.data;
 
     const employee = await db.user.findUnique({
@@ -321,6 +322,14 @@ export async function GET(req: Request) {
     const allEmployees = url.searchParams.get("allEmployees") === "true";
     const month = url.searchParams.get("month");
     const year = url.searchParams.get("year");
+    let store = url.searchParams.get("store");
+
+    if (store === " ") {
+      return NextResponse.json(
+        { error: "Bad Request: Store parameter is invalid" },
+        { status: 400 }
+      );
+    }
 
     const where: any = {};
     if (month) where.month = parseInt(month);
@@ -345,7 +354,9 @@ export async function GET(req: Request) {
           AND: [
             session.user.profile === "hr_coordinator" ||
             session.user.profile === "store_director"
-              ? { storeId: storeId }
+              ? store === null
+                ? { storeId }
+                : { store }
               : {},
           ],
         },

@@ -18,7 +18,7 @@ export const sidebarLinks: SidebarLink[] = [
     path: rootEmployeeRoute + "/personal-details",
   },
   {
-    name: "Leave Calendar",
+    name: "Holiday Calendar",
     icon: MdCalendarToday,
     path: rootEmployeeRoute + "/leave-calendar",
   },
@@ -236,3 +236,5 @@ export const storeChangePermission = [
   // "hr_coordinator_manager ",
   "md",
 ];
+
+

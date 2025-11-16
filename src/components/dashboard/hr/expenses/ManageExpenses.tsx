@@ -61,6 +61,7 @@ interface ExpensePayload {
   finalReading: number;
   rate: number;
   miscellaneousExpense: number;
+  storeName?: string;
 }
 
 type ViewType = "day" | "month";
@@ -152,7 +153,7 @@ const rateOptions: RateOption[] = [
   { value: 1.2, label: "1.2" },
 ];
 
-const ManageExpenses: React.FC = () => {
+const ManageExpenses = ({ storeName }: { storeName: string }) => {
   const [viewType, setViewType] = useState<ViewType>("day");
   const [selectedDate, setSelectedDate] = useState<string>(
     new Date().toISOString().split("T")[0]
@@ -181,6 +182,7 @@ const ManageExpenses: React.FC = () => {
     allEmployees: "true",
     startDate,
     endDate,
+    storeName: storeName,
   });
 
   const { mutate: employeeExpenses } = usePostEmployeeExpenses();
@@ -573,12 +575,20 @@ const ManageExpenses: React.FC = () => {
             handleCellEdit(employee.id, field, parseFloat(e.target.value))
           }
           disabled={!isEmployeeEditing || isReadOnly}
-          className={`w-full p-3 rounded-lg text-center text-sm font-medium transition-all duration-300 text-black ${
-            isEmployeeEditing && !isReadOnly
-              ? "border-2 border-blue-400 bg-white shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-              : "bg-gray-50 border border-gray-200 cursor-not-allowed opacity-70"
-          }`}
-          style={{ minWidth: "80px" }}
+          className={`w-full 
+              p-1.5 sm:p-2.5 md:p-3 
+              rounded-md sm:rounded-lg
+              text-center 
+              text-xs sm:text-sm md:text-base 
+              font-medium 
+              transition-all duration-300 
+              text-black
+              ${
+                isEmployeeEditing && !isReadOnly
+                  ? "border-2 border-blue-400 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  : "bg-gray-50 border border-gray-200 cursor-not-allowed opacity-70"
+              }`}
+          style={{ minWidth: "60px" }} // smaller for mobile
         >
           {rateOptions.map((option) => (
             <option
@@ -599,20 +609,30 @@ const ManageExpenses: React.FC = () => {
         value={value}
         onChange={(e) => handleCellEdit(employee.id, field, e.target.value)}
         disabled={!isEmployeeEditing || isReadOnly}
-        className={`w-full p-3 rounded-lg text-sm text-center font-medium transition-all duration-300 text-black ${
-          isEmployeeEditing && !isReadOnly
-            ? "border-2 border-blue-400 bg-white shadow-md focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
-            : "bg-gray-50 border border-gray-200 cursor-not-allowed opacity-70"
-        }`}
+        className={`w-1/2
+              p-1.5 sm:p-2.5 md:p-3 
+              rounded-md sm:rounded-lg
+              text-center 
+              text-xs sm:text-sm md:text-base 
+              font-medium 
+              transition-all duration-300 
+              text-black
+              ${
+                isEmployeeEditing && !isReadOnly
+                  ? "border-2 border-blue-400 bg-white shadow-sm focus:border-blue-500 focus:ring-2 focus:ring-blue-200"
+                  : "bg-gray-50 border border-gray-200 cursor-not-allowed opacity-70"
+              }`}
         placeholder="0"
         min="0"
         step="1"
+        style={{ minWidth: "60px" }} // compact for mobile
         onKeyDown={(e) => {
           if (
             field === "miscellaneousExpense" ||
             field === "initialReading" ||
             field === "finalReading"
           ) {
+            // block decimal, negative, scientific keys
             if (
               e.key === "." ||
               e.key === "-" ||
@@ -1006,35 +1026,61 @@ const ManageExpenses: React.FC = () => {
                           {viewType === "day" && (
                             <>
                               <td className="p-4 text-center">
-                                <div className="p-2 rounded bg-gray-50 border text-sm">
-                                  {employee.initialReading}
+                                <div className="p-2 rounded bg-gray-50  text-sm">
+                                  {isEditing
+                                    ? renderEditableCell(
+                                        employee,
+                                        "initialReading",
+                                        "number"
+                                      )
+                                    : employee.initialReading}
                                 </div>
                               </td>
                               <td className="p-4 text-center">
-                                <div className="p-2 rounded bg-gray-50 border text-sm">
-                                  {employee.finalReading}
+                                <div className="p-2 rounded bg-gray-50  text-sm">
+                                  {isEditing
+                                    ? renderEditableCell(
+                                        employee,
+                                        "finalReading",
+                                        "number"
+                                      )
+                                    : employee.finalReading}
                                 </div>
                               </td>
                               <td className="p-4 text-center">
-                                <div className="p-2 rounded bg-gray-50 border font-medium text-sm">
-                                  {totalUsage.toLocaleString()}
+                                <div className="p-2 rounded bg-gray-50  font-medium text-sm">
+                                  {totalUsage.toLocaleString()} KM
                                 </div>
                               </td>
                               <td className="p-4 text-center">
-                                <div className="p-2 rounded bg-gray-50 border text-sm">
-                                  ₹{employee.rate}
+                                <div className="p-2 rounded bg-gray-50  text-sm">
+                                  ₹
+                                  {isEditing
+                                    ? renderEditableCell(
+                                        employee,
+                                        "rate",
+                                        "select"
+                                      )
+                                    : employee.rate}
                                 </div>
                               </td>
                             </>
                           )}
                           <td className="p-4 text-center">
-                            <div className="p-2 rounded bg-gray-50 border font-medium text-sm">
+                            <div className="p-2 rounded bg-gray-50  font-medium text-sm">
                               ₹{totalAmount.toFixed(2)}
                             </div>
                           </td>
                           <td className="p-4 text-center">
-                            <div className="p-2 rounded bg-gray-50 border text-sm">
-                              ₹{employee.miscellaneousExpense}
+                            <div className="p-2 rounded bg-gray-50  text-sm">
+                              ₹
+                              {isEditing
+                                ? renderEditableCell(
+                                    employee,
+                                    "miscellaneousExpense",
+                                    "number"
+                                  )
+                                : employee.miscellaneousExpense}
                             </div>
                           </td>
                           <td className="p-4 text-center">
@@ -1153,7 +1199,14 @@ const ManageExpenses: React.FC = () => {
                                 Initial Reading:
                               </span>
                               <span className="font-medium">
-                                {employee.initialReading} KM
+                                {isEditing
+                                  ? renderEditableCell(
+                                      employee,
+                                      "initialReading",
+                                      "number"
+                                    )
+                                  : employee.initialReading}{" "}
+                                KM
                               </span>
                             </div>
                             <div className="flex justify-between items-center">
@@ -1161,7 +1214,14 @@ const ManageExpenses: React.FC = () => {
                                 Final Reading:
                               </span>
                               <span className="font-medium">
-                                {employee.finalReading} KM
+                                {isEditing
+                                  ? renderEditableCell(
+                                      employee,
+                                      "finalReading",
+                                      "number"
+                                    )
+                                  : employee.finalReading}{" "}
+                                KM
                               </span>
                             </div>
                             <div
@@ -1181,7 +1241,15 @@ const ManageExpenses: React.FC = () => {
                             <div className="flex justify-between items-center">
                               <span className="text-gray-600">Rate:</span>
                               <span className="font-medium">
-                                ₹{employee.rate}/KM
+                                ₹
+                                {isEditing
+                                  ? renderEditableCell(
+                                      employee,
+                                      "rate",
+                                      "select"
+                                    )
+                                  : employee.rate}
+                                /KM
                               </span>
                             </div>
                           </>

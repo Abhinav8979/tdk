@@ -1,7 +1,8 @@
 "use client";
+import AllStoreFilter from "@/components/AllStoreFilter";
 import PayrollSystemSkeleton from "@/components/skeleton/Hr/payslipTable/PayslipTableSkeleton";
 import { useAppDispatch } from "@/hooks/ReduxSelector";
-import { useGetPayslips } from "@/hooks/RTKHooks";
+import { useGetAllStoreNames, useGetPayslips } from "@/hooks/RTKHooks";
 import { rootHrRoute } from "@/lib/paths";
 // import { exportToExcelPayslips } from "@/lib/exportToExcelPayslips";
 import { setLoading } from "@/redux/store/utils";
@@ -49,6 +50,12 @@ const PayrollSystem = () => {
     return new Date().getFullYear();
   });
 
+  const { data: allStoreNames } = useGetAllStoreNames(true);
+
+  const [storeFilter, setStoreFilter] = useState<string>(
+    allStoreNames!! ? allStoreNames[0].name : " "
+  );
+
   const [showDatePicker, setShowDatePicker] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [searchTerm, setSearchTerm] = useState("");
@@ -66,6 +73,7 @@ const PayrollSystem = () => {
     allEmployees: true,
     month: currentMonth + 1 === 13 ? 1 : currentMonth + 1,
     year: currentYear,
+    store: storeFilter,
   });
 
   if (isPending) {
@@ -333,6 +341,14 @@ const PayrollSystem = () => {
                 />
               </button>
             </div>
+          </div>
+
+          <div className="ml-6">
+            <AllStoreFilter
+              stores={allStoreNames}
+              selectedStore={storeFilter}
+              onStoreChange={(e: any) => setStoreFilter(e.target.value)}
+            />
           </div>
         </div>
 

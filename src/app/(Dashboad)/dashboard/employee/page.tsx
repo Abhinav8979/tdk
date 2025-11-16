@@ -4,6 +4,9 @@ import DashboardSkeleton from "@/components/skeleton/employee/EmployeeDashboardS
 import { useGetEmployeeSummary } from "@/hooks/RTKHooks";
 import { useSession } from "next-auth/react";
 import React, { useEffect, useState } from "react";
+import { IoDocumentTextOutline } from "react-icons/io5";
+import ModalLayout from "@/layouts/ModalLayout";
+import PolicyUploadModal from "@/components/modal/Policy";
 
 type Leave = {
   leaveId: string;
@@ -27,12 +30,19 @@ const Card = ({
   title,
   content,
   icon,
+  onClick,
 }: {
   title: string;
   content: string | number;
   icon?: React.ReactNode;
+  onClick?: () => void;
 }) => (
-  <div className="bg-white p-6 rounded-2xl shadow-lg flex flex-col items-center justify-between h-full transition-transform hover:scale-105 hover:shadow-xl">
+  <div
+    className={`bg-white p-6 rounded-2xl shadow-lg flex flex-col items-center justify-between h-full transition-transform hover:scale-105 hover:shadow-xl ${
+      onClick ? "cursor-pointer" : ""
+    }`}
+    onClick={onClick}
+  >
     <div className="text-lg font-semibold mb-4 text-[var(--foreground)]">
       {title}
     </div>
@@ -45,6 +55,7 @@ const Card = ({
 
 const Dashboard = () => {
   const [id, setId] = useState<string | undefined>();
+  const [showPolicyModal, setShowPolicyModal] = useState(false);
   const session = useSession();
 
   useEffect(() => {
@@ -113,7 +124,7 @@ const Dashboard = () => {
       <div className="flex flex-col md:flex-row justify-between items-center mb-12 bg-white rounded-2xl shadow-lg p-8">
         <div className="flex items-center space-x-6">
           <div className="w-16 h-16 md:w-20 md:h-20 rounded-full bg-[var(--primary-background)] text-white flex items-center justify-center text-2xl font-bold">
-            {getUserInitials(name)} 
+            {getUserInitials(name)}
           </div>
           <div>
             <h2 className="text-2xl md:text-3xl font-bold text-[var(--foreground)]">
@@ -137,6 +148,21 @@ const Dashboard = () => {
         <Card
           title="Total Expenses"
           content={totalExpenses > 0 ? `₹${totalExpenses}` : "₹0"}
+        />
+      </div>
+
+      {/* Policy Documents Card */}
+      <div className="mt-6">
+        <Card
+          title="Company Policies"
+          content="View Documents"
+          icon={
+            <IoDocumentTextOutline
+              size={32}
+              className="text-[var(--primary-background)]"
+            />
+          }
+          onClick={() => setShowPolicyModal(true)}
         />
       </div>
 
@@ -230,6 +256,17 @@ const Dashboard = () => {
           </div>
         </div>
       </div>
+
+      {/* Policy Upload Modal */}
+      {showPolicyModal && (
+        <ModalLayout>
+          <PolicyUploadModal
+            id={id}
+            onClose={() => setShowPolicyModal(false)}
+            isUploadAllowed={false}
+          />
+        </ModalLayout>
+      )}
     </div>
   );
 };

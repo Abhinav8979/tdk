@@ -28,7 +28,6 @@ export async function GET(request: Request) {
 
     // Fetch all stores with related data
 
-    console.log(await db.store.findMany({}));
     const stores = await db.store.findMany({
       select: {
         id: true,

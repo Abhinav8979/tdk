@@ -464,3 +464,9 @@ export const exportToExcelPayslips = ({
   // Save file
   XLSX.writeFile(wb, fileName);
 };
+
+export function getUniqueStoreNames(data: any[] = []): string[] {
+  const names = data.map((e) => e.store ?? e.store_info?.name ?? "");
+  const unique = Array.from(new Set(names.filter(Boolean))); // remove empty strings
+  return unique;
+}

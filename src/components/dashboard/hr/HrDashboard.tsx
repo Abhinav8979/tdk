@@ -1,7 +1,9 @@
 "use client";
+import PolicyUploadModal from "@/components/modal/Policy";
 import Button from "@/components/ui/button/Button";
 import { useAppDispatch } from "@/hooks/ReduxSelector";
 import { useReportingManager } from "@/hooks/RTKHooks";
+import ModalLayout from "@/layouts/ModalLayout";
 import { rootHrRoute } from "@/lib/paths";
 import { setLoading } from "@/redux/store/utils";
 import { useSession } from "next-auth/react";
@@ -29,6 +31,7 @@ export default function HRInfoPage() {
   const session = useSession();
   const [userData, setUserData] = useState<UserData>({});
   const [activeTab, setActiveTab] = useState<"profile" | "access">("profile");
+  const [modal, setModal] = useState(false);
 
   const [reportingManager, setReportingManager] = useState("");
 
@@ -142,9 +145,18 @@ export default function HRInfoPage() {
               >
                 View Attendance
               </ActionButton>
-              {/* <ActionButton link={`${rootHrRoute + "/employee-details"}`}>
-                Update Policies
-              </ActionButton> */}
+              <TabButton
+                label="Update/View Profile"
+                onClick={() => setModal(true)}
+              />
+              {modal && (
+                <ModalLayout>
+                  <PolicyUploadModal
+                    id={userData.userId}
+                    onClose={() => setModal(false)}
+                  />
+                </ModalLayout>
+              )}
             </div>
           </div>
         </div>
@@ -193,7 +205,7 @@ function ActionButton({
 
 interface TabButtonProps {
   label: string;
-  active: boolean;
+  active?: boolean;
   onClick: () => void;
 }
 

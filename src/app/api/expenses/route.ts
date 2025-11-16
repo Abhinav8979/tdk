@@ -39,6 +39,7 @@ const querySchema = z
     endDate: z.string().optional(),
     limit: z.string().regex(/^\d+$/, "Limit must be a number").optional(),
     offset: z.string().regex(/^\d+$/, "Offset must be a number").optional(),
+    storeName: z.string(),
   })
   .refine(
     (data) => {
@@ -73,7 +74,7 @@ function normalizeDateToUTC(date: Date): Date {
 
 export async function POST(req: Request) {
   try {
-    await db.$connect().catch(error => {
+    await db.$connect().catch((error) => {
       console.error("Failed to connect to database:", error);
       throw new Error(`Database connection failed: ${error.message}`);
     });
@@ -175,7 +176,9 @@ export async function POST(req: Request) {
           updatedAt: new Date(),
         },
       });
-      console.log(`Updated expense ${expense.id} for employee ${employeeId} on ${date}`);
+      console.log(
+        `Updated expense ${expense.id} for employee ${employeeId} on ${date}`
+      );
     } else {
       // Create new expense
       expense = await db.expense.create({
@@ -194,7 +197,9 @@ export async function POST(req: Request) {
           updatedAt: new Date(),
         },
       });
-      console.log(`Created expense ${expense.id} for employee ${employeeId} on ${date}`);
+      console.log(
+        `Created expense ${expense.id} for employee ${employeeId} on ${date}`
+      );
     }
 
     return NextResponse.json(expense, { status: 201 });
@@ -207,7 +212,10 @@ export async function POST(req: Request) {
       );
     }
     return NextResponse.json(
-      { error: "Internal server error", details: error.message || "Unknown error" },
+      {
+        error: "Internal server error",
+        details: error.message || "Unknown error",
+      },
       { status: 500 }
     );
   }
@@ -215,7 +223,7 @@ export async function POST(req: Request) {
 
 export async function PUT(req: Request) {
   try {
-    await db.$connect().catch(error => {
+    await db.$connect().catch((error) => {
       console.error("Failed to connect to database:", error);
       throw new Error(`Database connection failed: ${error.message}`);
     });
@@ -322,7 +330,9 @@ export async function PUT(req: Request) {
         updatedAt: new Date(),
       },
     });
-    console.log(`Updated expense ${expense.id} for employee ${employeeId} on ${date}`);
+    console.log(
+      `Updated expense ${expense.id} for employee ${employeeId} on ${date}`
+    );
 
     return NextResponse.json(expense);
   } catch (error: any) {
@@ -334,7 +344,10 @@ export async function PUT(req: Request) {
       );
     }
     return NextResponse.json(
-      { error: "Internal server error", details: error.message || "Unknown error" },
+      {
+        error: "Internal server error",
+        details: error.message || "Unknown error",
+      },
       { status: 500 }
     );
   }
@@ -342,7 +355,7 @@ export async function PUT(req: Request) {
 
 export async function GET(req: Request) {
   try {
-    await db.$connect().catch(error => {
+    await db.$connect().catch((error) => {
       console.error("Failed to connect to database:", error);
       throw new Error(`Database connection failed: ${error.message}`);
     });
@@ -389,26 +402,45 @@ export async function GET(req: Request) {
       );
     }
 
-    const { employeeId, id, allEmployees, startDate, endDate, limit, offset } = parsed.data;
+    const {
+      employeeId,
+      id,
+      allEmployees,
+      startDate,
+      endDate,
+      limit,
+      offset,
+      storeName,
+    } = parsed.data;
     const effectiveEmployeeId = employeeId || id; // Support `id` as alias
     const isAllEmployees = allEmployees === "true";
     const limitNum = limit ? parseInt(limit) : 100;
     const offsetNum = offset ? parseInt(offset) : 0;
 
     // Normalize dates to UTC
-    const start = startDate ? normalizeDateToUTC(new Date(startDate)) : normalizeDateToUTC(new Date(0));
-    const end = endDate ? normalizeDateToUTC(new Date(endDate)) : normalizeDateToUTC(new Date());
+    const start = startDate
+      ? normalizeDateToUTC(new Date(startDate))
+      : normalizeDateToUTC(new Date(0));
+    const end = endDate
+      ? normalizeDateToUTC(new Date(endDate))
+      : normalizeDateToUTC(new Date());
     end.setUTCHours(23, 59, 59, 999);
 
     if (isAllEmployees) {
-      let employees: { id: string; email: string; username: string; store: string | null; store_info: { name: string | null } | null }[] = [];
+      let employees: {
+        id: string;
+        email: string;
+        username: string;
+        store: string | null;
+        store_info: { name: string | null } | null;
+      }[] = [];
       let skip = offsetNum;
       let hasMore = true;
 
       while (hasMore) {
         const batchEmployees = await db.user.findMany({
           where: {
-            store: currentUser.store,
+            store: storeName ,
           },
           select: {
             id: true,
@@ -423,7 +455,8 @@ export async function GET(req: Request) {
 
         employees = employees.concat(batchEmployees);
         skip += BATCH_SIZE;
-        hasMore = batchEmployees.length === BATCH_SIZE && employees.length < limitNum;
+        hasMore =
+          batchEmployees.length === BATCH_SIZE && employees.length < limitNum;
       }
 
       employees = employees.slice(0, limitNum);
@@ -441,7 +474,10 @@ export async function GET(req: Request) {
         const batchExpenses = await db.expense.findMany({
           where: {
             employeeId: { in: employeeIds },
-            date: startDate === endDate ? { equals: start } : { gte: start, lte: end },
+            date:
+              startDate === endDate
+                ? { equals: start }
+                : { gte: start, lte: end },
           },
           orderBy: [{ date: "asc" }],
           take: BATCH_SIZE,
@@ -464,9 +500,15 @@ export async function GET(req: Request) {
           .filter((exp) => exp.employeeId === employee.id)
           .map((exp) => ({
             ...exp,
-            date: new Date(exp.date.getTime() + istOffset).toISOString().split("T")[0],
-            createdAt: new Date(exp.createdAt.getTime() + istOffset).toISOString(),
-            updatedAt: new Date(exp.updatedAt.getTime() + istOffset).toISOString(),
+            date: new Date(exp.date.getTime() + istOffset)
+              .toISOString()
+              .split("T")[0],
+            createdAt: new Date(
+              exp.createdAt.getTime() + istOffset
+            ).toISOString(),
+            updatedAt: new Date(
+              exp.updatedAt.getTime() + istOffset
+            ).toISOString(),
           })),
       }));
 
@@ -493,7 +535,10 @@ export async function GET(req: Request) {
       const expenses = await db.expense.findMany({
         where: {
           employeeId: effectiveEmployeeId,
-          date: startDate === endDate ? { equals: start } : { gte: start, lte: end },
+          date:
+            startDate === endDate
+              ? { equals: start }
+              : { gte: start, lte: end },
         },
         orderBy: [{ date: "asc" }],
       });
@@ -507,9 +552,15 @@ export async function GET(req: Request) {
         storeName: employee.store_info?.name || null,
         expenses: expenses.map((exp) => ({
           ...exp,
-          date: new Date(exp.date.getTime() + istOffset).toISOString().split("T")[0],
-          createdAt: new Date(exp.createdAt.getTime() + istOffset).toISOString(),
-          updatedAt: new Date(exp.updatedAt.getTime() + istOffset).toISOString(),
+          date: new Date(exp.date.getTime() + istOffset)
+            .toISOString()
+            .split("T")[0],
+          createdAt: new Date(
+            exp.createdAt.getTime() + istOffset
+          ).toISOString(),
+          updatedAt: new Date(
+            exp.updatedAt.getTime() + istOffset
+          ).toISOString(),
         })),
       };
 
@@ -529,7 +580,10 @@ export async function GET(req: Request) {
       );
     }
     return NextResponse.json(
-      { error: "Internal server error", details: error.message || "Unknown error" },
+      {
+        error: "Internal server error",
+        details: error.message || "Unknown error",
+      },
       { status: 500 }
     );
   }

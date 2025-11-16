@@ -7,8 +7,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  // Add this for better serverless support
-  directUrl = env("DATABASE_URL")
 }
 
 model Store {
@@ -108,6 +106,7 @@ model User {
   Salaries                 Salary[]          @relation("EmployeeSalaries")
   store_info               Store?            @relation("StoreEmployees", fields: [storeId], references: [id])
   hrStores                 Store[]           @relation("StoreHRs")
+  policies                 UserPolicy[]
 }
 
 model Attendance {
@@ -267,6 +266,20 @@ model OvertimeRequest {
 
   @@index([employeeId, date, status])
   @@index([approverId])
+}
+
+model UserPolicy {
+  id        String   @id @default(uuid())
+  userId    String
+  url       String
+  fileName  String   // original name, e.g. "leave-policy.pdf"
+  updatedAt DateTime @updatedAt
+  updatedBy String
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_policy")
 }
 
 model Lead {

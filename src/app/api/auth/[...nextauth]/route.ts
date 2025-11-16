@@ -2,6 +2,10 @@ import NextAuth, { NextAuthOptions } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { db } from "@/lib/db";
+import {
+  buildPermissionsSummary,
+  getRoleConfig,
+} from "@/lib/frontendPerimission";
 
 export const authOptions: NextAuthOptions = {
   providers: [
@@ -210,6 +214,73 @@ export const authOptions: NextAuthOptions = {
             console.error("Error handling store association:", error);
             // Log error but don't block login
           }
+        }
+
+        // ========================================
+        // PERMISSIONS INTEGRATION
+        // ========================================
+
+        // Fetch user's store associations for permission checks
+        let userStoreIds: string[] = [];
+
+        try {
+          if (token.userId && token.role && token.profile) {
+            // Check if user is an employee (BASIC role)
+            if (token.role === "BASIC") {
+              // Employees: get their assigned store only
+              if (token.storeId) {
+                userStoreIds = [token.storeId];
+              }
+            } else {
+              // ADMIN users: check their specific profile/role
+              if (token.profile === "hr_coordinator") {
+                // HR Coordinators: get stores they're associated with
+                const hrStores = await db.store.findMany({
+                  where: {
+                    hrs: { some: { id: token.userId } },
+                  },
+                  select: { id: true },
+                });
+                userStoreIds = hrStores.map((s) => s.id);
+              } else if (token.profile === "store_director") {
+                // Store Directors: get their assigned store(s)
+                if (token.storeId) {
+                  userStoreIds = [token.storeId];
+                }
+              }
+              // Roles with ALL access (hr_coordinator_manager, general_manager, md)
+              // don't need specific store IDs
+            }
+          }
+
+          // Build permissions summary
+          const permissionsSummary = buildPermissionsSummary(
+            {
+              userId: token.userId as string,
+              role: token.role === "BASIC" ? "BASIC" : (token.profile as any),
+              storeIds: userStoreIds,
+            },
+            token.storeId as string | undefined
+          );
+
+          // Attach permissions to session
+          session.user.permissions = {
+            summary: permissionsSummary,
+            storeIds: userStoreIds,
+          };
+        } catch (error) {
+          console.error("Error building permissions:", error);
+          // Provide minimal permissions on error
+          session.user.permissions = {
+            summary: {
+              role: token.role as any,
+              allStoreAccess: false,
+              canRead: false,
+              canWrite: false,
+              storeChecked: null,
+            },
+            storeIds: [],
+          };
         }
       }
       return session;

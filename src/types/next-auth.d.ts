@@ -1,24 +1,9 @@
-import { Role, profile, dept} from "@prisma/client";
+// types/next-auth.d.ts
+import "next-auth";
+import "next-auth/jwt";
+import { Role, RolePermissionConfig } from "@/lib/permissions";
 
 declare module "next-auth" {
-  interface User {
-    id: string;
-    email: string;
-    username: string;
-    profilePicture?: string | null;
-    isHrPortalFirstLogin: boolean;
-    userType: string;
-    role: Role;
-    referenceEmployee?: string | null;
-    reportingManager?: string | null;
-    empNo?: string | null;
-    restricted: boolean;
-    storeId?: string | null;
-    store?: string | null;
-    profile:profile|null;
-    dept:dept|null;
-  }
-
   interface Session {
     user: {
       userId: string;
@@ -34,27 +19,37 @@ declare module "next-auth" {
       restricted: boolean;
       storeId?: string | null;
       store?: string | null;
-      profile:profile|null;
-      dept:dept|null;
+      profile?: string | null;
+      dept?: string | null;
+      permissions?: {
+        summary: {
+          role: Role;
+          allStoreAccess: boolean;
+          canRead: boolean;
+          canWrite: boolean;
+          storeChecked: string | null;
+        };
+        storeIds: string[];
+      };
     };
-    token: {
-      userId: string;
-      email: string;
-      username: string;
-      profilePicture?: string | null;
-      isHrPortalFirstLogin: boolean;
-      userType: string;
-      userRole: Role;
-      referenceEmployee?: string | null;
-      reportingManager?: string | null;
-      empNo?: string | null;
-      restricted: boolean;
-      storeId?: string | null;
-      store?: string | null;
-      exp?: number;
-      profile:profile|null;
-      dept:dept|null;
-    };
+  }
+
+  interface User {
+    id: string;
+    email: string;
+    username: string;
+    profilePicture?: string | null;
+    isHrPortalFirstLogin: boolean;
+    userType: string;
+    role: Role;
+    referenceEmployee?: string | null;
+    reportingManager?: string | null;
+    empNo?: string | null;
+    restricted: boolean;
+    storeId?: string | null;
+    store?: string | null;
+    profile?: string | null;
+    dept?: string | null;
   }
 }
 
@@ -66,16 +61,14 @@ declare module "next-auth/jwt" {
     profilePicture?: string | null;
     isHrPortalFirstLogin: boolean;
     userType: string;
-    userRole: Role;
+    role: Role;
     referenceEmployee?: string | null;
     reportingManager?: string | null;
     empNo?: string | null;
     restricted: boolean;
     storeId?: string | null;
     store?: string | null;
-    exp?: number;
-    profile:profile|null;
-    dept:dept|null;
+    profile?: string | null;
+    dept?: string | null;
   }
 }
-

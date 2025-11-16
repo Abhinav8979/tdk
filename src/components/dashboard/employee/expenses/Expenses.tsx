@@ -51,6 +51,7 @@ const Expenses: React.FC = () => {
   const [showDatePicker, setShowDatePicker] = useState<boolean>(false);
   const [calendarDate, setCalendarDate] = useState<Date>(new Date());
   const datePickerRef = useRef<HTMLDivElement>(null);
+  const [store, setStore] = useState<string | null>(null);
 
   // Generate start and end dates based on currentDate (same day)
   const getDayDates = (date: Date) => {
@@ -77,11 +78,13 @@ const Expenses: React.FC = () => {
     employeeId: id,
     startDate,
     endDate,
+    storeName: store,
   });
 
   useEffect(() => {
     if (status === "authenticated" && session?.user?.userId) {
       setId(session.user.userId);
+      setStore(session.user.storeId || null);
     }
   }, [status, session]);
 

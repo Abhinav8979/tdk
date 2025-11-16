@@ -65,13 +65,18 @@ export const useGetEmployeeSummary = (id: string | undefined) => {
   });
 };
 
-export const useEmployeeDetals = () => {
+export const useEmployeeDetals = (storeName?: string) => {
   return useQuery<EmployeeDetails[]>({
-    queryKey: ["employeeDetails"],
+    queryKey: ["employeeDetails", storeName],
     queryFn: async () => {
-      const { data } = await axios.get<EmployeeDetails[]>("/api/user?all=true");
+      let url = "/api/user?all=true";
+      if (storeName && storeName !== "all") {
+        url += `&storeName=${storeName}`;
+      }
+      const { data } = await axios.get(url);
       return data;
     },
+    enabled: !!storeName,
   });
 };
 
@@ -145,13 +150,19 @@ export const useReportingManager = () => {
 };
 
 // Calendar
-export const useGetCalendarLeaves = () => {
+export const useGetCalendarLeaves = (storeFilter: string | null) => {
+  let url = "/api/store-settings/holiday";
+  if (storeFilter && storeFilter !== "all") {
+    url += `?store=${storeFilter}`;
+  }
+
   return useQuery({
-    queryKey: ["calendarLeaves"],
+    queryKey: ["calendarLeaves", storeFilter],
     queryFn: async () => {
-      const { data } = await axios.get("/api/store-settings/holiday");
+      const { data } = await axios.get(url);
       return data;
     },
+    enabled: !!storeFilter,
   });
 };
 
@@ -340,11 +351,11 @@ export const usePostEmployeeExpenses = () =>
 
 export const useGetEmployeeExpenses = (params = {}) => {
   const queryKey = ["Expenses", params];
+  const query = new URLSearchParams(params).toString();
 
   return useQuery({
     queryKey,
     queryFn: async () => {
-      const query = new URLSearchParams(params).toString();
       const { data } = await axios.get(`/api/expenses?${query}`);
       return data;
     },
@@ -666,3 +677,74 @@ export const useSendQuery = () =>
       toast.success("Email sent successfully!");
     },
   });
+
+// policy
+
+export const useGetPolicy = (params = {}) => {
+  const queryKey = ["policy", params];
+
+  return useQuery({
+    queryKey,
+    queryFn: async () => {
+      const query = new URLSearchParams(params).toString();
+      const { data } = await axios.get(`/api/policy/${query}`);
+      return data;
+    },
+    enabled: !!params,
+  });
+};
+
+export const usePostPolicy = (id: string) =>
+  useMutation({
+    mutationFn: async (data: FormData) => {
+      console.log(id);
+      const response = await axios.post(`/api/policy/${id}`, data, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+      return response.data;
+    },
+    onError: () => {
+      toast.error("Something went wrong!");
+    },
+    onSuccess: () => {
+      toast.success("policy updated successfully!");
+    },
+  });
+
+export const useDeletePolicy = (id: string) =>
+  useMutation({
+    mutationFn: async (policyId: any) => {
+      console.log(id);
+      console.log(policyId);
+      const response = await axios.delete(
+        `/api/policy/${id}?policyId=${policyId}`,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+      return response.data;
+    },
+    onError: () => {
+      toast.error("Something went wrong!");
+    },
+    onSuccess: () => {
+      toast.success("policy updated successfully!");
+    },
+  });
+
+// GET ALL STORE NAMES
+
+export const useGetAllStoreNames = (accessAll: boolean) => {
+  return useQuery({
+    queryKey: ["allStoreNames"],
+    queryFn: async () => {
+      const { data } = await axios.get("/api/store-settings/getAllStore");
+      return data.stores;
+    },
+    enabled: accessAll,
+  });
+};

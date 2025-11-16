@@ -7,7 +7,7 @@ import { checkPermission } from "@/lib/permissions";
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     // Check permission for viewing holidays
     const permissionCheck = await checkPermission(
       session,
@@ -23,11 +23,11 @@ export async function GET(req: Request) {
     }
 
     const currentUser = await db.user.findUnique({
-      where: { email: session?.user?.email || '' },
-      select: { 
+      where: { email: session?.user?.email || "" },
+      select: {
         id: true,
         store: true,
-        profile: true
+        profile: true,
       },
     });
 
@@ -36,20 +36,34 @@ export async function GET(req: Request) {
     }
 
     // For profiles with store access but not bound to a specific store (like hr_coordinator_manager)
-    let storeName = currentUser.store;
-    if (!storeName && currentUser.profile === "hr_coordinator_manager") {
-      // If manager wants to view all holidays, they need to specify a store in query params
-      const url = new URL(req.url);
-      const storeParam = url.searchParams.get("store");
-      if (storeParam) {
-        storeName = storeParam;
-      } else {
-        return NextResponse.json(
-          { error: "Store parameter is required for this profile" },
-          { status: 400 }
-        );
-      }
+    let storeName;
+    const url = new URL(req.url);
+    const storeParam = url.searchParams.get("store");
+    console.log("Reached", storeParam);
+    if (storeParam) {
+      storeName = storeParam;
+    } else {
+      return NextResponse.json(
+        { error: "Store parameter is required for this profile" },
+        { status: 400 }
+      );
     }
+    console.log(storeName);
+    // if (!storeName && currentUser.profile === "hr_coordinator_manager") {
+    //   // If manager wants to view all holidays, they need to specify a store in query params
+
+    //      const url = new URL(req.url);
+    //   const storeParam = url.searchParams.get("store");
+    //   console.log("Reached", storeParam);
+    //   if (storeParam) {
+    //     storeName = storeParam;
+    //   } else {
+    //     return NextResponse.json(
+    //       { error: "Store parameter is required for this profile" },
+    //       { status: 400 }
+    //     );
+    //   }
+    // }
 
     if (!storeName) {
       return NextResponse.json(
@@ -60,13 +74,13 @@ export async function GET(req: Request) {
 
     const store = await db.store.findUnique({
       where: { name: storeName },
-      select: { 
-        id: true, 
-        calendar: { 
-          select: { 
-            id: true 
-          } 
-        } 
+      select: {
+        id: true,
+        calendar: {
+          select: {
+            id: true,
+          },
+        },
       },
     });
 

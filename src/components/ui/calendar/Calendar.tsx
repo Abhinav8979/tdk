@@ -20,7 +20,6 @@ import { toast } from "react-toastify";
 
 import "./calendar.css";
 import CalendarSkeleton from "../skeletonLoading/CalendarSkeletonLoading";
-
 const CustomToolbarCalendar = ({
   isEditable = false,
   storeName = null,
@@ -39,7 +38,7 @@ const CustomToolbarCalendar = ({
     data: calendarData = [],
     isPending,
     refetch,
-  } = useGetCalendarLeaves();
+  } = useGetCalendarLeaves(storeName);
   const { mutate: createCalendar } = useCreateCalendarLeave();
   const { mutate: deleteCalendar } = useDeleteCalendarLeave();
 

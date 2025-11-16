@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import React, { useEffect, useState } from "react";
+import { useSession } from "next-auth/react"; // <-- added
 import Button from "@/components/ui/button/Button";
 import ModalLayout from "@/layouts/ModalLayout";
 import LeaveForm from "./leave props/LeaveForm";
@@ -13,8 +14,14 @@ const Leave = () => {
   const pathname = usePathname();
   const searchParams = useSearchParams();
 
+  const { data: session, status } = useSession(); // <-- get session
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [view, setView] = useState<"toolbar" | "history">("toolbar");
+
+  // derive storeName from session.user
+  // adjust these keys to match your session's user shape
+  const storeNameFromSession =
+    (session as any)?.user?.store ?? (session as any)?.user?.storeName ?? " ";
 
   const handleApplyLeave = () => {
     const params = new URLSearchParams(searchParams.toString());
@@ -39,7 +46,7 @@ const Leave = () => {
   }, [searchParams]);
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen p-4">
       <div className="mx-auto">
         <header className="flex justify-between items-center mb-6 p-4 bg-white rounded-lg shadow">
           <h1 className="text-2xl font-bold text-gray-800">Leave Management</h1>
@@ -79,7 +86,7 @@ const Leave = () => {
 
         {view === "toolbar" ? (
           <CustomToolbarCalendar
-            storeName="leave-calendar"
+            storeName={storeNameFromSession} // <-- pass store from next-auth
             isEditable={false}
           />
         ) : (
